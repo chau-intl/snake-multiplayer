@@ -29,8 +29,8 @@ socket.on('pong2', function() {
 	let latency = Date.now() - startTime;
     const fast = (latency < 100);
     const pingBadge = document.querySelector("#ping-badge");
-    pingBadge.removeClass((fast ? "badge-danger" : "badge-success"));
-    pingBadge.addClass((fast ? "badge-success" : "badge-danger"));
+    pingBadge.classList.remove((fast ? "badge-danger" : "badge-success"));
+    pingBadge.classList.add((fast ? "badge-success" : "badge-danger"));
 	document.querySelector("#server-ping").textContent = latency;
 });
 
