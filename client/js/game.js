@@ -83,15 +83,15 @@ socket.on("death", function(data) {
 	document.querySelector("#total-score").textContent = data.score;
 	document.querySelector("#final-score").style.display = "block";
 	setTimeout(function() {
-		$("#menu").fadeIn(1000);
-		$("#player-info").fadeOut(1000);
+		$(document.querySelector("#menu")).fadeIn(1000);
+		$(document.querySelector("#player-info")).fadeOut(1000);
 		document.querySelector("#btn_play").focus();
 	}, 1000);
 });
 
 socket.on("spawn", function(data) {
-	$("#menu").fadeOut(500);
-	$("#player-info").fadeIn(500);
+	$(document.querySelector("#menu")).fadeOut(500);
+	$(document.querySelector("#player-info")).fadeIn(500);
 	try {
 		game.camera.follow(null, Phaser.Camera.FOLLOW_LOCKON, 1, 1);
 		game.camera.x = data.x * PIXEL_SIZE;
@@ -216,7 +216,16 @@ document.addEventListener("DOMContentLoaded", function() {
 
 	document.querySelector("#name").focus();
 
-	game = new Phaser.Game(800, 600, Phaser.CANVAS, 'snake-game', {preload: preload, create:create});
+	// game = new Phaser.Game(800, 600, Phaser.CANVAS, 'snake-game', {preload: preload, create:create});
+	game = new Phaser.Game({
+        type: Phaser.AUTO,
+        width: 800,
+        height: 600,
+        scene: {
+            preload: preload,
+            create: create
+        }
+    });
 
 	try {
 		let name = getCookie("MultiplayerSnake-name");
