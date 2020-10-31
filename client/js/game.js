@@ -219,6 +219,8 @@ document.addEventListener("DOMContentLoaded", function() {
 	// game = new Phaser.Game(800, 600, Phaser.CANVAS, 'snake-game', {preload: preload, create:create});
 	game = new Phaser.Game({
         type: Phaser.AUTO,
+        mode: Phaser.Scale.FIT,
+        parent: 'snake-game',
         width: 800,
         height: 600,
         scene: {
