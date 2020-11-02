@@ -11,8 +11,7 @@ const MAX_FOOD = 1500;
 const config = {
     MAX_NAME_LENGTH: 32,
     MAP_WIDTH: 500,
-    MAP_HEIGHT: 500,
-    BACKGROUND_ID: Math.floor(Math.random() * (12 - 1) + 1)
+    MAP_HEIGHT: 500
 };
 
 //-------------------------------------
@@ -243,13 +242,6 @@ const update = async () => {
 setInterval(() => {
 	update();
 }, 1000 / fps);
-
-setInterval(() => {
-	config.BACKGROUND_ID = Math.floor(Math.random() * (12 - 1) + 1);
-    io.emit('backgroundUpdate', {
-        BACKGROUND_ID: config.BACKGROUND_ID
-    });
-}, 120000);
 
 const spawnFood = () => {
 	let id = Math.random();

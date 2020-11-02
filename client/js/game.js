@@ -5,6 +5,7 @@ let PLAYER_ID = -1;
 
 let game;
 const socket = io();
+const ratioPixelSize = PIXEL_SIZE * window.devicePixelRatio;
 
 let cameraFollow;
 
@@ -14,6 +15,7 @@ let food;
 let map;
 let names;
 let backgroundSprite;
+let grid;
 
 let elements = {};
 
@@ -35,28 +37,15 @@ socket.on('pong2', () => {
 
 /* Init game engine*/
 const preload = () => {
-	game.load.image('background1', '/client/img/game/background.png');
-	game.load.image('background2', '/client/img/game/star1.jpg');
-	game.load.image('background3', '/client/img/game/star2.jpg');
-	game.load.image('background4', '/client/img/game/star3.jpg');
-	game.load.image('background5', '/client/img/game/star4.jpg');
-	game.load.image('background6', '/client/img/game/star5.jpg');
-	game.load.image('background7', '/client/img/game/star6.jpg');
-	game.load.image('background8', '/client/img/game/star7.jpg');
-	game.load.image('background9', '/client/img/game/star8.jpg');
-	game.load.image('background10', '/client/img/game/star9.jpg');
-	game.load.image('background11', '/client/img/game/star10.jpg');
-	game.load.image('background12', '/client/img/game/star11.jpg');
+	game.load.image('background', '/client/img/game/basic_stars.png');
 };
 
 const create = () => {
     game.stage.smoothed = false;
     game.world.setBounds(0, 0, MAP_WIDTH * PIXEL_SIZE, MAP_HEIGHT * PIXEL_SIZE);
 
-    const ratioPixelSize = PIXEL_SIZE * window.devicePixelRatio;
-	backgroundSprite = game.add.tileSprite(0, 0, MAP_WIDTH * ratioPixelSize, MAP_HEIGHT * ratioPixelSize, 'background' + BACKGROUND_ID);
-    backgroundSprite.alpha = 1;
-    game.create.grid('grid', MAP_WIDTH * ratioPixelSize, MAP_HEIGHT * ratioPixelSize, ratioPixelSize, ratioPixelSize, 'rgba(255,255,255,0.2)', true, () => { game.add.sprite(0, 0, 'grid'); });
+	backgroundSprite = game.add.tileSprite(0, 0, MAP_WIDTH * ratioPixelSize, MAP_HEIGHT * ratioPixelSize, 'background');
+    backgroundSprite.alpha = 1;    
 
 	game.scale.parentIsWindow = false;
 
@@ -178,14 +167,14 @@ socket.on('gamestate', (data) => {
 	};
 });
 
-socket.on('backgroundUpdate', (data) => {
-    BACKGROUND_ID = data.BACKGROUND_ID;
-    game.add.tween(backgroundSprite).to({ alpha: 0 }, 1000, Phaser.Easing.Linear.None, true, 0, 0, false);
-    window.setTimeout(() => {
-        backgroundSprite.loadTexture('background' + BACKGROUND_ID);
-        game.add.tween(backgroundSprite).to({ alpha: 1 }, 1000, Phaser.Easing.Linear.None, true, 0, 0, false);
-    }, 1000);
-});
+// socket.on('backgroundUpdate', (data) => {
+//     BACKGROUND_ID = data.BACKGROUND_ID;
+//     game.add.tween(backgroundSprite).to({ alpha: 0 }, 1000, Phaser.Easing.Linear.None, true, 0, 0, false);
+//     window.setTimeout(() => {
+//         backgroundSprite.loadTexture('background' + BACKGROUND_ID);
+//         game.add.tween(backgroundSprite).to({ alpha: 1 }, 1000, Phaser.Easing.Linear.None, true, 0, 0, false);
+//     }, 1000);
+// });
 
 /* Functions */
 const encodeHTML = (s) => {
@@ -287,19 +276,27 @@ document.addEventListener('keydown', (e) => {
         case 68:
         case 39:
             inputId = 'right';
-        break;
+        	break;
         case 83:
         case 40:
             inputId = 'down';
-        break;
+        	break;
         case 65:
         case 37:
             inputId = 'left';
-        break;
+        	break;
         case 87:
         case 38:
             inputId = 'up';
-        break;
+			break;
+		case 71:
+			if(grid) {
+				grid.destroy();
+				grid = null;
+			} else {
+				game.create.grid('grid', MAP_WIDTH * ratioPixelSize, MAP_HEIGHT * ratioPixelSize, ratioPixelSize, ratioPixelSize, 'rgba(127,127,127,0.2)', true, () => { grid = game.add.sprite(0, 0, 'grid'); });
+			}
+			break;			
         default:
     }
 	if (inputId) {
