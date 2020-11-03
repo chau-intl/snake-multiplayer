@@ -13,6 +13,15 @@ const config = {
     MAP_WIDTH: 500,
     MAP_HEIGHT: 500
 };
+const FOOD_TYPES = [
+	{ type: 'basic', color: '0x00FF00'},
+	{ type: 'x3', color: '0xFF00FF'},
+	{ type: 'x5', color: '0x0000FF'},
+	{ type: 'wormhole', color: '0xFFFFFF'},
+	{ type: 'blackhole', color: '0x070707'},
+	{ type: 'supernova', color: '0xFFFF00'},
+	{ type: 'flipper', color: '0x00FFFF'}
+];
 
 //-------------------------------------
 
@@ -45,9 +54,11 @@ let PLAYER_LIST = {};
 let FOOD_LIST = {};
 
 const Food = (id, x, y) => {
+	let type = Math.floor(Math.random() * FOOD_TYPES.length);
 	let self = {
-		id: id,
-		color: Math.floor(Math.random() * 360),
+		id: id,		
+		color: FOOD_TYPES[type].color,
+		type: FOOD_TYPES[type].type,
 		x: x,
 		y: y
 	};
@@ -65,47 +76,76 @@ const Player = (id) => {
 		score: 0,
 		tailBlocks: [],
 		inGame: false,
+		stuck: false,
+		invincible: false,
+		invincibleBlocks: 0,
 		name: 'Unnamed player',
 		color: 0
 	};
 
-	self.update = () => {
-		self.tailBlocks.unshift(Tail(self.x, self.y, self.id, self.color));
+	self.update = () => {		
+		// We can be stuck if inside a wormhole.
+		if (!self.stuck) {
+			// Add new head to the snake.
+			self.tailBlocks.unshift(Tail(self.x, self.y, self.id, self.color));
+		} else {
+			// Reduce the score by one for each iteration.
+			if(self.score > 0) {
+				--self.score;
+			} else {
+				self.stuck = false;
+				// Make sure we add a block on the wormhole.
+				self.tailBlocks.unshift(Tail(self.x, self.y, self.id, self.color));
+			}
+		}
+		
+		// Ensure the snake is atleast 2 blocks long, but remove the tail until it matches the score.
 		while (self.score + 2 < self.tailBlocks.length) {
 			delete self.tailBlocks.pop();
 		};
-		switch (self.direction) {
-			case 0:
-				--self.y;
-				break;
-			case 1:
-				++self.x;
-				break;
-			case 2:
-				++self.y;
-				break;
-			case 3:
-				--self.x;
-				break;
-			default:
-				self.direction = 0;
-				break;
+		if (!self.stuck) {
+			switch (self.direction) {
+				case 0:
+					--self.y;
+					break;
+				case 1:
+					++self.x;
+					break;
+				case 2:
+					++self.y;
+					break;
+				case 3:
+					--self.x;
+					break;
+				default:
+					self.direction = 0;
+					break;
+			};
 		};
 		self.lastDirection = self.direction;
 
+		// The player dies if leaving the map.
 		if (self.x <= 0 || self.x >= config.MAP_WIDTH || self.y <= 0 || self.y >= config.MAP_WIDTH) {
 			self.die();
 			return;
 		};
 
-		for (let p in PLAYER_LIST) {
-			let player = PLAYER_LIST[p];
-			for (let t in player.tailBlocks) {
-				let pTail = player.tailBlocks[t];
-				if (self.x === pTail.x && self.y === pTail.y) {
-					self.die();
-					player.score += (5+(self.score / 2));
-					return;
+		// If invincible, skip the test to see if we have hit another player.
+		if(self.invincible) {
+			self.invincibleBlocks -= 1;
+			if(self.invincibleBlocks == 0) {
+				self.invincible = false;
+			};
+		} else {
+			for (let p in PLAYER_LIST) {
+				let player = PLAYER_LIST[p];
+				for (let t in player.tailBlocks) {
+					let pTail = player.tailBlocks[t];
+					if (self.x === pTail.x && self.y === pTail.y) {
+						self.die();
+						player.score += (5+(self.score / 2));
+						return;
+					};
 				};
 			};
 		};
@@ -113,8 +153,46 @@ const Player = (id) => {
 		for (let f in FOOD_LIST) {
 			let food = FOOD_LIST[f];
 			if (self.x === food.x && self.y === food.y) {
+				// We have hit food.
+				if(food.type == 'x3') {
+					self.score += 2;
+				} else if (food.type == 'x5') {
+					self.score += 4;
+				} else if(food.type == 'wormhole') {
+					self.x = Math.floor(Math.random() * (config.MAP_WIDTH - 20)) + 10;
+					self.y = Math.floor(Math.random() * (config.MAP_WIDTH - 20)) + 10;
+					self.direction = Math.floor(Math.random() * 4);
+				} else if(food.type == 'blackhole') {
+					if(!self.invincible) {
+					self.stuck = true;
+					};
+				} else if(food.type == 'supernova') {
+					self.invincible = true;
+					self.invincibleBlocks = 30;
+				} else if(food.type == 'flipper') {
+					// Set the head as the last tail piece.
+					tailBlock = self.tailBlocks[self.tailBlocks.length - 1];
+					self.x = tailBlock.x;
+					self.y = tailBlock.y;
+
+					// Get the second last tailblock.
+					secondTailBlock = self.tailBlocks[self.tailBlocks.length - 2];
+					if(tailBlock.x - secondTailBlock.x > 0) {
+						self.direction = 1;
+					} else if(tailBlock.y - secondTailBlock.y > 0) {
+						self.direction = 2;
+					} else if(tailBlock.x - secondTailBlock.x < 0) {
+						self.direction = 3;
+					} else if(tailBlock.y - secondTailBlock.y < 0) {
+						self.direction = 0;
+					};
+
+					// Reverse the tailblocks.
+					self.tailBlocks.reverse();
+				};
 				++self.score;
-				delete FOOD_LIST[food.id];
+
+				delete FOOD_LIST[food.id];				
 			};
 		};
 	};
@@ -188,21 +266,29 @@ const update = async () => {
 			if (!player.inGame) { // Player died
 				continue;
 			};
+			let color = player.color;
+			if(player.invincible) {
+				color = Math.floor(Math.random() * 360);
+			}
 			playerPack.push({
 				id: player.id,
 				x: player.x,
 				y: player.y,
 				name: player.name,
 				score: player.score,
-				color: player.color
+				color: color
 			});
 			leaderboardPlayers.push(player);
 			for (let t in player.tailBlocks) {
 				let tail = player.tailBlocks[t];
+				let color = tail.color;
+				if(player.invincible) {
+					color = Math.floor(Math.random() * 360);
+				}
 				tailPack.push({
 					x: tail.x,
 					y: tail.y,
-					color: tail.color
+					color: color
 				});
 			};
 		};

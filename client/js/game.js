@@ -128,7 +128,8 @@ socket.on('gamestate', (data) => {
 	for (let i = 0, iEnd = data.food.length; i < iEnd; ++i) {
 		let foodData = data.food[i];
 		let g = game.add.graphics(foodData.x * PIXEL_SIZE, foodData.y * PIXEL_SIZE);
-		g.beginFill(hslToHex(foodData.color, 100, 35), 1);
+		//g.beginFill(hslToHex(foodData.color, 100, 35), 1);
+		g.beginFill(foodData.color);
 		g.drawRect(0, 0, PIXEL_SIZE, PIXEL_SIZE);
 		g.endFill();
 		food.add(g);
